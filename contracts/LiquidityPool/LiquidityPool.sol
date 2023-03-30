@@ -29,7 +29,8 @@ contract LiquidityPool{
     /// @notice ReservePool instance
     ReservePool public reservepool;
 
-    /// @notice Set the Address which Reserve pool, Owner will use to Recieve the funds in Liquidity pool as fees 
+    /// @notice Set Reservepool, Owner will use to Recieve the funds in Liquidity pool as fees from here
+    /// @param  _reservepool address of ReservePool contract
     function setAddress(address payable _reservepool) external onlyOwner{
         reservepool = ReservePool(_reservepool);
     }
