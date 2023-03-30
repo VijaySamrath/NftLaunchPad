@@ -7,20 +7,24 @@ describe("Launchpad TEST", async function () {
     let Launchpad;
 
     async function deploy() {
+
+      //Deploy Native Token contract
       const NativeToken = await hre.ethers.getContractFactory("NativeToken");
       nativeToken = await NativeToken.deploy();
     
       await nativeToken.deployed();
     
       console.log("NativeToken deployed to:", nativeToken.address);
-    
+
+    // Deploy Nft contract
     const NftMint = await hre.ethers.getContractFactory("NftMint");
     nftMint = await NftMint.deploy();
     
     await nftMint.deployed();
     
     console.log("NftMint deployed to:", nftMint.address);
-    
+
+    // Deploy Liquidity Pool Contract to collect fee as funds for the project
     const LiquidityPool = await hre.ethers.getContractFactory("LiquidityPool");
     liquidityPool = await LiquidityPool.deploy();
     
@@ -28,6 +32,7 @@ describe("Launchpad TEST", async function () {
     
     console.log("LiquidityPool deployed to:", liquidityPool.address);
     
+    // Deploy the reserve pool contract 
     const ReservePool = await hre.ethers.getContractFactory("ReservePool");
     reservePool = await ReservePool.deploy(liquidityPool.address, nativeToken.address);
     
@@ -35,6 +40,7 @@ describe("Launchpad TEST", async function () {
     
     console.log("ReservePool deployed to:", reservePool.address);
     
+    // Deploy the Staking Pool contract for staking and earning Reward 
     const StakingPool = await hre.ethers.getContractFactory("StakingPool");
     stakingPool = await StakingPool.deploy(nativeToken.address, nftMint.address);
     
@@ -51,6 +57,7 @@ describe("Launchpad TEST", async function () {
 
     it('Set the Reserve Pool address in LiquidityPool', async () => {
     
+      // set the ReservePool address as we can have multiple reservePool.
       SetReservepool = await liquidityPool.setAddress(reservePool.address)
 
     })
@@ -95,7 +102,7 @@ describe("Launchpad TEST", async function () {
       await stakingPool.connect(accounts[1]).createStake(nativeToken.balanceOf(accounts[1].address))
 
       //Native Token of person 1 becomes 0 after staking
-      console.log("Person 1 Account Balance Should be 0", await nativeToken.balanceOf(accounts[1].address))
+      console.log("Person 1 Account Balance of Native token Should be 0", await nativeToken.balanceOf(accounts[1].address))
 
       //Total Stakes of Native Token
       console.log("Total Stakes of NativeToken in Staking Pool", await stakingPool.totalStakes())
@@ -110,6 +117,7 @@ describe("Launchpad TEST", async function () {
       //Total Rewrd Before Distribution 
       console.log("Total Reward in the contract Before", await stakingPool.totalRewards())
 
+      // Reward Distributed only by the owner
       await stakingPool.connect(accounts[0]).distributeRewards()
 
       // Total Reward after Distribution 
@@ -118,7 +126,8 @@ describe("Launchpad TEST", async function () {
     })
     
     it("As Rewards distributed person can claim NFt ", async () => {
-
+      
+      // Reward before Claiming Nft
       console.log("Reward for the person1 Before Claiming Nft ", await stakingPool.rewardOf(accounts[1].address))
 
       // Person 1 Claims Nft
@@ -136,13 +145,14 @@ describe("Launchpad TEST", async function () {
  
       // Stake of Person 1 in the contract
       console.log("Stake of Person 1", await stakingPool.stakeOf(accounts[1].address))
-
+      
+      //checking Balance of Native Token before removing stake 
       console.log("Person 1 NativeToken Balance Before removing Stake", await nativeToken.balanceOf(accounts[1].address))
 
       // Remove Stake after the Reward is finally Distributed
       await stakingPool.connect(accounts[1]).removeStake(ethers.BigNumber.from("60000000000000000000"))
 
-      //Balance of NativeToken 
+      //checking Balance of Native Token After removing stake 
       console.log("Person 1 NativeToken Balance after removing Stake", await nativeToken.balanceOf(accounts[1].address))
 
 
